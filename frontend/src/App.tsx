@@ -22,9 +22,9 @@ export const App: React.FC = () => {
   return (
     <AuthProvider>
       <Router>
-        <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans">
+        <div className="flex flex-col min-h-screen bg-white text-[#172033] font-sans antialiased">
           <Navbar />
-          <main className="flex-1">
+          <main className="flex-1 pb-16 md:pb-0">
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/explore" element={<ExplorePage />} />

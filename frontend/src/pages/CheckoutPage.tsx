@@ -8,7 +8,6 @@ import {
   CreditCard,
   User as UserIcon,
   Mail,
-  Phone,
   AlertTriangle,
   ArrowRight,
   Sparkles,
@@ -93,7 +92,7 @@ export const CheckoutPage: React.FC = () => {
   const handlePayment = async () => {
     setErrorMessage("");
     if (timeLeftSeconds <= 0) {
-      setErrorMessage("Your reservation hold has expired. Please select tickets again.");
+      setErrorMessage("Your 10-minute reservation hold has expired. Please select tickets again.");
       return;
     }
 
@@ -124,7 +123,7 @@ export const CheckoutPage: React.FC = () => {
       const intent = intentRes.data;
 
       // 3. Verify & Capture payment instantly
-      const verifyRes = await api.post("/payments/verify/", {
+      await api.post("/payments/verify/", {
         order_id: order.id,
         payment_id: intent.payment_id,
         provider_order_id: intent.provider_order_id,
@@ -146,7 +145,7 @@ export const CheckoutPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 flex justify-center">
-        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#F26336] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -154,14 +153,14 @@ export const CheckoutPage: React.FC = () => {
   if (!reservation) {
     return (
       <div className="max-w-xl mx-auto px-4 py-20 text-center space-y-4">
-        <AlertTriangle className="w-12 h-12 text-rose-500 mx-auto" />
-        <h2 className="text-xl font-bold text-white">Reservation expired or not found</h2>
-        <p className="text-xs text-slate-400">
-          Ticket holds are valid for 10 minutes. Please select your seats or passes again.
+        <AlertTriangle className="w-12 h-12 text-[#D99116] mx-auto" />
+        <h2 className="text-xl font-bold text-[#172033]">Reservation expired or not found</h2>
+        <p className="text-xs text-[#647084]">
+          Ticket holds are held exclusively for 10 minutes. Please select your seats or passes again.
         </p>
         <Link
           to="/explore"
-          className="inline-block px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 text-white"
+          className="inline-block px-4 py-2 text-xs font-semibold rounded-xl bg-[#F26336] text-white hover:bg-[#DF4E27] transition shadow-sm"
         >
           Return to Events
         </Link>
@@ -169,81 +168,90 @@ export const CheckoutPage: React.FC = () => {
     );
   }
 
+  const isUrgent = timeLeftSeconds < 120;
+
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* Timer Bar */}
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+      {/* 10-Minute Cart Hold Countdown Bar */}
       <div
-        className={`rounded-2xl p-4 border flex items-center justify-between transition-all ${
-          timeLeftSeconds < 120
-            ? "bg-rose-950/40 border-rose-500/50 text-rose-300"
-            : "bg-indigo-950/40 border-indigo-500/30 text-indigo-300"
+        className={`rounded-2xl p-4 sm:p-5 border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+          isUrgent
+            ? "bg-red-50 border-red-200 text-[#DC2626]"
+            : "bg-[#FFF0E9] border-[#FFC2A8] text-[#172033]"
         }`}
       >
-        <div className="flex items-center gap-2.5">
-          <Clock className={`w-5 h-5 ${timeLeftSeconds < 120 ? "animate-bounce text-rose-400" : ""}`} />
+        <div className="flex items-center gap-3">
+          <Clock className={`w-5 h-5 ${isUrgent ? "text-[#DC2626] animate-pulse" : "text-[#F26336]"}`} />
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider block">
-              Cart Hold Expiring In
+            <span className="text-[10px] font-bold uppercase tracking-wider block text-[#647084]">
+              Exclusive Cart Hold Expiring In
             </span>
-            <span className="font-display font-black text-2xl text-white">
+            <span className="font-display font-black text-2xl text-[#172033]">
               {formatTimer(timeLeftSeconds)}
             </span>
           </div>
         </div>
-        <div className="text-right text-xs text-slate-400 hidden sm:block">
-          <span>Tickets are locked exclusively for you. Complete payment before the timer reaches 0:00.</span>
+        <div className="text-xs text-[#647084] max-w-sm sm:text-right">
+          <span>Your seats are locked exclusively for you. Complete payment before the timer reaches 0:00.</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Left: Attendee Form & Contact */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Contact & Attendee Information */}
+        <div className="lg:col-span-7 space-y-6">
           {/* Contact Details Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-            <h3 className="font-display font-bold text-lg text-white flex items-center gap-2">
-              <Mail className="w-4 h-4 text-indigo-400" />
-              <span>Contact Information (For Tickets & Invoices)</span>
+          <div className="bg-white border border-[#E6E9EF] rounded-2xl p-6 shadow-card space-y-4">
+            <h3 className="font-display font-bold text-base text-[#172033] flex items-center gap-2">
+              <Mail className="w-4 h-4 text-[#F26336]" />
+              <span>Contact Information (For Passes & Tax Invoices)</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-slate-400 block mb-1">Email Address *</label>
+                <label className="text-xs font-semibold text-[#172033] block mb-1">
+                  Email Address *
+                </label>
                 <input
                   type="email"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
                   placeholder="your.email@example.com"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#F7F8FA] border border-[#E6E9EF] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-[#172033] placeholder-[#8E98A8] focus:bg-white focus:outline-none focus:border-[#F26336] transition-colors"
                   required
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-400 block mb-1">Mobile Number</label>
+                <label className="text-xs font-semibold text-[#172033] block mb-1">
+                  Mobile Number
+                </label>
                 <input
                   type="tel"
                   value={contactPhone}
                   onChange={(e) => setContactPhone(e.target.value)}
                   placeholder="+91 98765 43210"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#F7F8FA] border border-[#E6E9EF] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-[#172033] placeholder-[#8E98A8] focus:bg-white focus:outline-none focus:border-[#F26336] transition-colors"
                 />
               </div>
             </div>
           </div>
 
           {/* Attendee Details Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-            <h3 className="font-display font-bold text-lg text-white flex items-center gap-2">
-              <UserIcon className="w-4 h-4 text-indigo-400" />
+          <div className="bg-white border border-[#E6E9EF] rounded-2xl p-6 shadow-card space-y-4">
+            <h3 className="font-display font-bold text-base text-[#172033] flex items-center gap-2">
+              <UserIcon className="w-4 h-4 text-[#4263EB]" />
               <span>Attendee Details</span>
             </h3>
-            <p className="text-xs text-slate-400">
-              Provide names for entry badge and security check at the gate.
+            <p className="text-xs text-[#647084]">
+              Names will be printed on the digital passes for entry badge identification at venue gates.
             </p>
 
             <div className="space-y-3">
               {attendees.map((att, index) => (
-                <div key={index} className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-2">
-                  <span className="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">
+                <div
+                  key={index}
+                  className="p-3.5 rounded-xl bg-[#F7F8FA] border border-[#E6E9EF] space-y-2"
+                >
+                  <span className="text-[11px] font-bold text-[#F26336] uppercase tracking-wider">
                     Ticket #{index + 1} Attendee
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -256,7 +264,7 @@ export const CheckoutPage: React.FC = () => {
                         copy[index].first_name = e.target.value;
                         setAttendees(copy);
                       }}
-                      className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
+                      className="bg-white border border-[#E6E9EF] rounded-lg px-3 py-2 text-xs text-[#172033] focus:outline-none focus:border-[#F26336]"
                     />
                     <input
                       type="text"
@@ -267,7 +275,7 @@ export const CheckoutPage: React.FC = () => {
                         copy[index].last_name = e.target.value;
                         setAttendees(copy);
                       }}
-                      className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
+                      className="bg-white border border-[#E6E9EF] rounded-lg px-3 py-2 text-xs text-[#172033] focus:outline-none focus:border-[#F26336]"
                     />
                   </div>
                 </div>
@@ -276,81 +284,90 @@ export const CheckoutPage: React.FC = () => {
           </div>
 
           {/* Payment Method Selector */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-            <h3 className="font-display font-bold text-lg text-white flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-indigo-400" />
+          <div className="bg-white border border-[#E6E9EF] rounded-2xl p-6 shadow-card space-y-4">
+            <h3 className="font-display font-bold text-base text-[#172033] flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-[#168566]" />
               <span>Select Payment Method</span>
             </h3>
 
-            <div className="p-4 rounded-xl border border-indigo-500/50 bg-indigo-600/10 flex items-center justify-between">
+            <div className="p-4 rounded-xl border border-[#BDE3D7] bg-[#E8F5F1] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
-                  <Sparkles className="w-5 h-5 text-amber-300" />
+                <div className="w-9 h-9 rounded-xl bg-[#168566] text-white flex items-center justify-center">
+                  <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm text-white flex items-center gap-2">
+                  <h4 className="font-bold text-xs sm:text-sm text-[#172033] flex items-center gap-2">
                     <span>Instant Verified Sandbox / Razorpay</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
-                      Recommended
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white text-[#168566] border border-[#BDE3D7]">
+                      Atomic Verification
                     </span>
                   </h4>
-                  <p className="text-xs text-slate-400">
-                    Test full atomic payment verification & ticket issuance without test card entry.
+                  <p className="text-xs text-[#647084]">
+                    Simulate full two-phase checkout capture with immediate digital ticket QR issuance.
                   </p>
                 </div>
               </div>
-              <div className="w-4 h-4 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20" />
+              <div className="w-4 h-4 rounded-full bg-[#168566] ring-4 ring-[#168566]/20 shrink-0" />
             </div>
           </div>
         </div>
 
-        {/* Right: Order Summary & Pay Button */}
-        <div className="sticky top-24 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
-          <div className="pb-4 border-b border-slate-800">
-            <h4 className="font-display font-bold text-base text-white">{reservation.listing_title}</h4>
-            <span className="text-xs text-slate-400">Hold Reference #{reservation.id.slice(0, 8)}</span>
+        {/* Right Column: Order Summary & Pay */}
+        <div className="lg:col-span-5 sticky top-24 bg-white border border-[#E6E9EF] rounded-2xl p-6 shadow-card space-y-5">
+          <div className="pb-3 border-b border-[#E6E9EF]">
+            <h4 className="font-display font-bold text-base text-[#172033]">
+              {reservation.listing_title}
+            </h4>
+            <span className="text-xs text-[#647084]">Hold Ref #{reservation.id.slice(0, 8)}</span>
           </div>
 
           {/* Itemized summary */}
           <div className="space-y-3 text-xs">
             {reservation.items.map((item) => (
-              <div key={item.id} className="flex justify-between text-slate-300">
-                <span>
+              <div key={item.id} className="flex justify-between text-[#172033]">
+                <span className="font-medium">
                   {item.ticket_type_name} × {item.quantity}
                 </span>
-                <span className="font-mono text-white">₹{Number(item.total_price).toLocaleString("en-IN")}</span>
+                <span className="font-semibold">
+                  ₹{Number(item.total_price).toLocaleString("en-IN")}
+                </span>
               </div>
             ))}
 
-            <div className="pt-3 border-t border-slate-800 space-y-2">
-              <div className="flex justify-between text-slate-400">
-                <span>Subtotal</span>
-                <span className="font-mono text-slate-200">
+            <div className="pt-3 border-t border-[#E6E9EF] space-y-2">
+              <div className="flex justify-between text-[#647084]">
+                <span>Ticket Subtotal</span>
+                <span className="font-semibold text-[#172033]">
                   ₹{Number(reservation.subtotal).toLocaleString("en-IN")}
                 </span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-[#647084]">
                 <span>Transparent Platform Fee</span>
-                <span className="font-mono text-slate-200">
+                <span className="font-semibold text-[#172033]">
                   ₹{Number(reservation.platform_fee).toFixed(2)}
                 </span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-[#647084]">
                 <span>GST (18% on fee)</span>
-                <span className="font-mono text-slate-200">₹{Number(reservation.tax).toFixed(2)}</span>
+                <span className="font-semibold text-[#172033]">
+                  ₹{Number(reservation.tax).toFixed(2)}
+                </span>
               </div>
 
-              <div className="pt-3 border-t border-slate-800 flex justify-between items-baseline">
-                <span className="font-display font-bold text-base text-white">Grand Total</span>
-                <span className="font-display font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-amber-300">
-                  ₹{Number(reservation.total).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <div className="pt-3 border-t border-[#E6E9EF] flex justify-between items-baseline">
+                <span className="font-display font-bold text-sm text-[#172033]">Grand Total</span>
+                <span className="font-display font-black text-2xl text-[#172033]">
+                  ₹{Number(reservation.total).toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </div>
             </div>
           </div>
 
           {errorMessage && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-[#DC2626] text-xs">
               {errorMessage}
             </div>
           )}
@@ -359,7 +376,7 @@ export const CheckoutPage: React.FC = () => {
           <button
             onClick={handlePayment}
             disabled={isProcessing || timeLeftSeconds <= 0}
-            className="w-full py-4 rounded-xl font-display font-bold text-base text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed shadow-glow transition-all flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-xl font-display font-bold text-sm text-white bg-[#F26336] hover:bg-[#DF4E27] active:bg-[#C83E18] disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-all flex items-center justify-center gap-2"
           >
             {isProcessing ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -372,8 +389,8 @@ export const CheckoutPage: React.FC = () => {
             )}
           </button>
 
-          <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 text-center">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#647084] text-center">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#168566]" />
             <span>256-Bit Encrypted Payment with Instant QR Issuance</span>
           </div>
         </div>

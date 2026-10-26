@@ -28,7 +28,6 @@ export const OrdersPage: React.FC = () => {
       await api.post(`/orders/${orderId}/cancel/`, {
         reason: "Customer requested cancellation from web portal",
       });
-      // refresh
       const res = await api.get("/orders/");
       setOrders(res.data.results || res.data || []);
     } catch (err: any) {
@@ -37,32 +36,37 @@ export const OrdersPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
       <div>
-        <h1 className="font-display font-black text-3xl sm:text-4xl text-white">
+        <h1 className="font-display font-black text-3xl sm:text-4xl text-[#172033]">
           Order History & Receipts
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Review your past and upcoming bookings with itemized tax invoices.
+        <p className="text-xs sm:text-sm text-[#647084] mt-1">
+          Review your past and upcoming bookings with itemized transparent tax invoices.
         </p>
       </div>
 
       {isLoading ? (
         <div className="space-y-4">
           {[1, 2].map((i) => (
-            <div key={i} className="h-36 rounded-2xl bg-slate-900/50 animate-pulse border border-slate-800" />
+            <div
+              key={i}
+              className="h-36 rounded-2xl bg-[#F7F8FA] animate-pulse border border-[#E6E9EF]"
+            />
           ))}
         </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-3xl border border-slate-800 bg-slate-900/40 p-12 text-center space-y-4">
-          <Calendar className="w-12 h-12 text-slate-500 mx-auto" />
-          <h3 className="text-white font-bold text-lg">No orders found</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            You haven't booked any tickets yet. Explore our live events to get started.
-          </p>
+        <div className="rounded-3xl border border-[#E6E9EF] bg-[#F7F8FA] p-12 text-center space-y-4 max-w-md mx-auto">
+          <Calendar className="w-12 h-12 text-[#8E98A8] mx-auto" />
+          <div className="space-y-1">
+            <h3 className="font-display font-bold text-base text-[#172033]">No orders found</h3>
+            <p className="text-xs text-[#647084]">
+              You haven't booked any tickets yet. Explore our live events to get started.
+            </p>
+          </div>
           <Link
             to="/explore"
-            className="inline-block px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-glow transition"
+            className="inline-block px-4 py-2 rounded-xl bg-[#F26336] hover:bg-[#DF4E27] text-white text-xs font-semibold shadow-sm transition"
           >
             Explore Events
           </Link>
@@ -72,60 +76,64 @@ export const OrdersPage: React.FC = () => {
           {orders.map((o) => (
             <div
               key={o.id}
-              className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4 hover:border-slate-700 transition"
+              className="bg-white border border-[#E6E9EF] rounded-2xl p-5 sm:p-6 space-y-4 hover:border-[#D4D9E2] transition shadow-card"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+              {/* Order Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E6E9EF]">
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                  <span className="text-[10px] text-[#8E98A8] uppercase tracking-wider block">
                     Order Reference
                   </span>
-                  <span className="font-mono font-bold text-base text-indigo-400">
+                  <span className="font-mono font-bold text-sm sm:text-base text-[#172033]">
                     {o.order_number}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                    className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
                       o.status === "confirmed"
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                        ? "bg-[#E8F5F1] text-[#168566]"
                         : o.status === "cancelled"
-                        ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                        : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                        ? "bg-red-50 text-[#DC2626]"
+                        : "bg-[#FEF7EB] text-[#D99116]"
                     }`}
                   >
                     {o.status}
                   </span>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-[#647084]">
                     {new Date(o.created_at).toLocaleDateString()}
                   </span>
                 </div>
               </div>
 
               {/* Event & Item Summary */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-slate-300">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                 <div className="sm:col-span-2 space-y-1">
-                  <h4 className="font-display font-bold text-base text-white">{o.listing_title}</h4>
-                  <p className="text-slate-400">
-                    {o.items?.map((it) => `${it.ticket_type_name} × ${it.quantity}`).join(", ") || "General Admission"}
+                  <h4 className="font-display font-bold text-base text-[#172033]">
+                    {o.listing_title}
+                  </h4>
+                  <p className="text-[#647084]">
+                    {o.items?.map((it) => `${it.ticket_type_name} × ${it.quantity}`).join(", ") ||
+                      "General Admission Pass"}
                   </p>
-                  <p className="text-slate-500">{o.contact_email}</p>
+                  <p className="text-[#8E98A8]">{o.contact_email}</p>
                 </div>
 
-                <div className="sm:text-right space-y-1">
-                  <span className="text-[10px] text-slate-500 uppercase block">Grand Total Paid</span>
-                  <span className="font-display font-black text-xl text-white">
+                <div className="sm:text-right space-y-0.5">
+                  <span className="text-[10px] text-[#8E98A8] uppercase block">Total Paid</span>
+                  <span className="font-display font-black text-xl text-[#172033]">
                     ₹{Number(o.total).toLocaleString("en-IN")}
                   </span>
-                  <p className="text-[10px] text-slate-500">Includes transparent booking fee</p>
+                  <p className="text-[10px] text-[#8E98A8]">Includes itemized fees</p>
                 </div>
               </div>
 
               {/* Bottom Actions */}
-              <div className="pt-2 flex items-center justify-between">
+              <div className="pt-3 border-t border-[#E6E9EF] flex items-center justify-between">
                 <Link
                   to="/tickets"
-                  className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5"
+                  className="text-xs font-semibold text-[#F26336] hover:text-[#DF4E27] flex items-center gap-1.5"
                 >
                   <Ticket className="w-3.5 h-3.5" />
                   <span>View Issued Passes</span>
@@ -134,7 +142,7 @@ export const OrdersPage: React.FC = () => {
                 {o.status === "confirmed" && (
                   <button
                     onClick={() => handleCancel(o.id)}
-                    className="text-xs font-medium text-slate-400 hover:text-rose-400 transition"
+                    className="text-xs font-medium text-[#647084] hover:text-[#DC2626] transition"
                   >
                     Cancel Booking
                   </button>

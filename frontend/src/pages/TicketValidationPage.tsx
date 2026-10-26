@@ -30,7 +30,6 @@ export const TicketValidationPage: React.FC = () => {
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanHistory, setScanHistory] = useState<any[]>([]);
 
-  // Automatically scan if token is passed in query params
   useEffect(() => {
     if (tokenFromUrl) {
       handleValidate(tokenFromUrl);
@@ -47,8 +46,8 @@ export const TicketValidationPage: React.FC = () => {
     try {
       const res = await api.post("/tickets/validate/", {
         token,
-        location: "Main Gate Gate 3",
-        device_info: "Beyond Scanner Terminal #1",
+        location: "Main Gate - Turnstile 3",
+        device_info: "Beyond Terminal Scanner #1",
       });
       const data: ScanResult = res.data;
       setScanResult(data);
@@ -57,7 +56,7 @@ export const TicketValidationPage: React.FC = () => {
           token: token.slice(0, 10),
           time: new Date().toLocaleTimeString(),
           status: data.result,
-          title: data.ticket?.event_title || "Ticket",
+          title: data.ticket?.event_title || "Verified Pass",
           ref: data.ticket?.reference,
         },
         ...prev,
@@ -66,7 +65,7 @@ export const TicketValidationPage: React.FC = () => {
       const data: ScanResult = err.response?.data || {
         valid: false,
         result: "invalid",
-        message: "Invalid ticket token. Ticket could not be verified.",
+        message: "Invalid ticket token. Pass could not be verified by cryptographic key.",
       };
       setScanResult(data);
       setScanHistory((prev) => [
@@ -85,25 +84,25 @@ export const TicketValidationPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
       {/* Header */}
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFF0E9] text-[#F26336] text-xs font-semibold">
           <Scan className="w-3.5 h-3.5" />
           <span>Venue Gate & Check-in Terminal Simulator</span>
         </div>
-        <h1 className="font-display font-black text-3xl sm:text-4xl text-white">
+        <h1 className="font-display font-black text-3xl sm:text-4xl text-[#172033]">
           Digital Pass Gate Scanner
         </h1>
-        <p className="text-sm text-slate-400 max-w-xl mx-auto">
+        <p className="text-xs sm:text-sm text-[#647084] max-w-xl mx-auto">
           Simulate official venue check-in by entering or scanning a ticket token or reference ID.
         </p>
       </div>
 
       {/* Scanner Input Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
+      <div className="bg-white border border-[#E6E9EF] rounded-2xl p-6 sm:p-8 space-y-6 shadow-card">
         <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 block">
+          <label className="text-xs font-bold uppercase tracking-wider text-[#172033] block">
             Scan / Enter Pass Token or Reference ID
           </label>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -114,14 +113,14 @@ export const TicketValidationPage: React.FC = () => {
                 value={inputToken}
                 onChange={(e) => setInputToken(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleValidate()}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
+                className="w-full bg-[#F7F8FA] border border-[#E6E9EF] rounded-xl pl-10 pr-4 py-3 text-sm text-[#172033] placeholder-[#8E98A8] focus:bg-white focus:outline-none focus:border-[#F26336] font-mono transition-colors"
               />
-              <QrCode className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <QrCode className="w-4 h-4 text-[#8E98A8] absolute left-3.5 top-1/2 -translate-y-1/2" />
             </div>
             <button
               onClick={() => handleValidate()}
               disabled={isScanning || !inputToken.trim()}
-              className="px-6 py-3 rounded-xl font-display font-bold text-sm bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-glow disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition"
+              className="px-6 py-3 rounded-xl font-display font-bold text-xs bg-[#F26336] hover:bg-[#DF4E27] text-white shadow-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition"
             >
               {isScanning ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -140,50 +139,50 @@ export const TicketValidationPage: React.FC = () => {
           <div
             className={`p-6 rounded-2xl border transition-all animate-in fade-in zoom-in-95 space-y-4 ${
               scanResult.valid
-                ? "bg-emerald-950/40 border-emerald-500/60 text-emerald-200"
+                ? "bg-[#E8F5F1] border-[#BDE3D7] text-[#168566]"
                 : scanResult.result === "already_used"
-                ? "bg-amber-950/40 border-amber-500/60 text-amber-200"
-                : "bg-rose-950/40 border-rose-500/60 text-rose-200"
+                ? "bg-[#FEF7EB] border-[#FCEFD8] text-[#D99116]"
+                : "bg-red-50 border-red-200 text-[#DC2626]"
             }`}
           >
             <div className="flex items-center gap-3">
               {scanResult.valid ? (
-                <CheckCircle2 className="w-8 h-8 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-8 h-8 text-[#168566] shrink-0" />
               ) : scanResult.result === "already_used" ? (
-                <AlertTriangle className="w-8 h-8 text-amber-400 shrink-0" />
+                <AlertTriangle className="w-8 h-8 text-[#D99116] shrink-0" />
               ) : (
-                <XCircle className="w-8 h-8 text-rose-400 shrink-0" />
+                <XCircle className="w-8 h-8 text-[#DC2626] shrink-0" />
               )}
               <div>
-                <h3 className="font-display font-black text-xl text-white">
+                <h3 className="font-display font-black text-xl text-[#172033]">
                   {scanResult.valid
                     ? "ACCESS GRANTED"
                     : scanResult.result === "already_used"
                     ? "ALREADY SCANNED"
                     : "ACCESS DENIED"}
                 </h3>
-                <p className="text-xs opacity-90 mt-0.5">{scanResult.message}</p>
+                <p className="text-xs text-[#647084] mt-0.5">{scanResult.message}</p>
               </div>
             </div>
 
-            {/* Ticket Info Card if found */}
+            {/* Ticket Info Card */}
             {scanResult.ticket && (
-              <div className="bg-slate-950/80 rounded-xl p-4 border border-slate-800 text-xs text-slate-300 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="bg-white rounded-xl p-4 border border-[#E6E9EF] text-xs text-[#647084] grid grid-cols-1 sm:grid-cols-2 gap-3 shadow-sm">
                 <div>
-                  <span className="text-[10px] text-slate-500 block uppercase">Event</span>
-                  <span className="font-bold text-white text-sm">{scanResult.ticket.event_title}</span>
+                  <span className="text-[10px] text-[#8E98A8] block uppercase">Event</span>
+                  <span className="font-bold text-[#172033] text-sm">{scanResult.ticket.event_title}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 block uppercase">Pass Reference</span>
-                  <span className="font-mono font-bold text-indigo-400">{scanResult.ticket.reference}</span>
+                  <span className="text-[10px] text-[#8E98A8] block uppercase">Pass Reference</span>
+                  <span className="font-mono font-bold text-[#F26336]">{scanResult.ticket.reference}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 block uppercase">Tier</span>
-                  <span className="font-semibold text-slate-200">{scanResult.ticket.ticket_type_name}</span>
+                  <span className="text-[10px] text-[#8E98A8] block uppercase">Tier</span>
+                  <span className="font-semibold text-[#172033]">{scanResult.ticket.ticket_type_name}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 block uppercase">Seat Assignment</span>
-                  <span className="font-semibold text-amber-400">
+                  <span className="text-[10px] text-[#8E98A8] block uppercase">Seat Assignment</span>
+                  <span className="font-semibold text-[#172033]">
                     {scanResult.ticket.seat_info || "General Admission"}
                   </span>
                 </div>
@@ -195,34 +194,34 @@ export const TicketValidationPage: React.FC = () => {
 
       {/* Scan History Audit Trail */}
       {scanHistory.length > 0 && (
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
-          <h3 className="font-display font-bold text-base text-white">
+        <div className="bg-white border border-[#E6E9EF] rounded-2xl p-6 shadow-card space-y-4">
+          <h3 className="font-display font-bold text-base text-[#172033]">
             Recent Gate Scans ({scanHistory.length})
           </h3>
           <div className="space-y-2">
             {scanHistory.map((item, idx) => (
               <div
                 key={idx}
-                className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between text-xs"
+                className="p-3 rounded-xl bg-[#F7F8FA] border border-[#E6E9EF] flex items-center justify-between text-xs"
               >
                 <div className="flex items-center gap-3">
                   <span
-                    className={`w-2 h-2 rounded-full ${
+                    className={`w-2.5 h-2.5 rounded-full ${
                       item.status === "valid"
-                        ? "bg-emerald-400"
+                        ? "bg-[#168566]"
                         : item.status === "already_used"
-                        ? "bg-amber-400"
-                        : "bg-rose-400"
+                        ? "bg-[#D99116]"
+                        : "bg-[#DC2626]"
                     }`}
                   />
                   <div>
-                    <span className="font-semibold text-white">{item.title}</span>
-                    <span className="text-slate-500 ml-2 font-mono">{item.ref}</span>
+                    <span className="font-semibold text-[#172033]">{item.title}</span>
+                    <span className="text-[#8E98A8] ml-2 font-mono">{item.ref}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="capitalize text-slate-400">{item.status.replace("_", " ")}</span>
-                  <span className="text-slate-500 font-mono">{item.time}</span>
+                  <span className="capitalize text-[#647084]">{item.status.replace("_", " ")}</span>
+                  <span className="text-[#8E98A8] font-mono">{item.time}</span>
                 </div>
               </div>
             ))}
