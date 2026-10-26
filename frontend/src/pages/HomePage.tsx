@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -18,12 +18,12 @@ import {
   Presentation,
   Compass,
   Palette,
-  Clock,
   Sparkles,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Listing } from "@/types";
 import { EventCard } from "@/components/shared/EventCard";
+import { SectionContainer } from "@/components/shared/SectionContainer";
 
 const CITIES = [
   "All Cities",
@@ -105,12 +105,12 @@ const POPULAR_CATEGORIES = [
 
 const SUGGESTED_SEARCHES = [
   "Arijit Singh Concert",
+  "Dune IMAX Experience",
   "IPL 2027 Mumbai vs Chennai",
   "Zakir Khan Live",
   "Wonderla Weekend Pass",
-  "Kala Ghoda Festival",
+  "Mumbai to Goa Bus",
   "DevConf India",
-  "Mumbai to Pune Bus",
 ];
 
 export const HomePage: React.FC = () => {
@@ -162,23 +162,63 @@ export const HomePage: React.FC = () => {
     navigate(`/explore?search=${encodeURIComponent(tag)}`);
   };
 
-  // Segment listings into sections
-  const featuredEvents = allListings.filter((e) => e.is_featured);
-  const trendingEvents = allListings.slice(0, 4);
+  // Filter listings by selected city if any
+  const cityFilteredListings = useMemo(() => {
+    if (selectedCity === "All Cities") return allListings;
+    return allListings.filter(
+      (item) =>
+        item.venue_city?.toLowerCase() === selectedCity.toLowerCase() ||
+        item.venue_name?.toLowerCase().includes(selectedCity.toLowerCase())
+    );
+  }, [allListings, selectedCity]);
 
-  const movieAndComedy = allListings.filter(
-    (e) => e.category?.slug === "movies" || e.category?.slug === "comedy"
-  );
-  const activitiesList = allListings.filter((e) => e.category?.slug === "activities");
-  const sportsAndConcerts = allListings.filter(
-    (e) => e.category?.slug === "sports" || e.category?.slug === "concerts"
-  );
-  const culturalAndConferences = allListings.filter(
-    (e) => e.category?.slug === "cultural" || e.category?.slug === "conferences"
-  );
+  // Section 4: Trending Near You (Top booked / high engagement events)
+  const trendingEvents = useMemo(() => {
+    const source = cityFilteredListings.length > 0 ? cityFilteredListings : allListings;
+    // Sort by priority/capacity or featured status, take top 4
+    return [...source].sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0)).slice(0, 4);
+  }, [cityFilteredListings, allListings]);
+
+  // Section 5: Featured Upcoming Events (Explicitly featured, avoiding direct trending duplicates if possible)
+  const featuredEvents = useMemo(() => {
+    const featured = allListings.filter((e) => e.is_featured);
+    // Prefer items not in the top 2 of trending to prevent repetitive visual rhythm
+    const trendingIds = new Set(trendingEvents.slice(0, 2).map((t) => t.id));
+    const nonDuplicated = featured.filter((e) => !trendingIds.has(e.id));
+    return (nonDuplicated.length > 0 ? nonDuplicated : featured).slice(0, 3);
+  }, [allListings, trendingEvents]);
+
+  // Section 6: Movies & Entertainment (Strictly movies & comedy)
+  const movieAndComedyListings = useMemo(() => {
+    return allListings.filter(
+      (e) => e.category?.slug === "movies" || e.category?.slug === "comedy"
+    );
+  }, [allListings]);
+
+  // Section 7: Experiences & Attractions (Strictly activities)
+  const activitiesListings = useMemo(() => {
+    return allListings.filter((e) => e.category?.slug === "activities");
+  }, [allListings]);
+
+  // Section 8: Sports & Live Performances (Strictly sports & concerts)
+  const sportsAndConcertListings = useMemo(() => {
+    return allListings.filter(
+      (e) => e.category?.slug === "sports" || e.category?.slug === "concerts"
+    );
+  }, [allListings]);
+
+  // Section 9: Local & Cultural Events (Strictly cultural, conferences, and travel/buses)
+  const culturalAndConferencesListings = useMemo(() => {
+    return allListings.filter(
+      (e) =>
+        e.category?.slug === "cultural" ||
+        e.category?.slug === "conferences" ||
+        e.category?.slug === "buses"
+    );
+  }, [allListings]);
 
   return (
-    <div className="space-y-16 sm:space-y-24 pb-20">
+    <div className="w-full pb-20">
       {/* 2. Hero and Universal Search Section */}
       <section className="relative bg-white pt-6 pb-12 sm:pt-10 sm:pb-16 border-b border-[#E6E9EF]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -191,11 +231,11 @@ export const HomePage: React.FC = () => {
                   <span>The Unified Experience Marketplace</span>
                 </div>
 
-                <h1 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-[#172033] tracking-tight leading-[1.1]">
+                <h1 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-[#172033] tracking-tight leading-[1.1]">
                   Find what moves you.
                 </h1>
 
-                <p className="text-base sm:text-lg text-[#647084] max-w-xl leading-relaxed">
+                <p className="text-sm sm:text-lg text-[#647084] max-w-xl leading-relaxed">
                   Movies, concerts, sports, buses, attractions, workshops and more — all in one place.
                 </p>
               </div>
@@ -277,6 +317,7 @@ export const HomePage: React.FC = () => {
                   {SUGGESTED_SEARCHES.slice(0, 4).map((tag) => (
                     <button
                       key={tag}
+                      type="button"
                       onClick={() => handleQuickTagSearch(tag)}
                       className="text-[11px] px-2.5 py-0.5 rounded-full bg-[#F7F8FA] hover:bg-[#FFF0E9] hover:text-[#F26336] text-[#647084] border border-[#E6E9EF] transition-colors"
                     >
@@ -303,7 +344,7 @@ export const HomePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Column: High Quality Live Event Photograph */}
+            {/* Right Column: Authentic Live Event Photograph */}
             <div className="lg:col-span-5">
               <div className="relative rounded-3xl overflow-hidden bg-[#F7F8FA] border border-[#E6E9EF] shadow-card aspect-[4/3] sm:aspect-[16/10] lg:aspect-[4/3]">
                 <img
@@ -311,10 +352,10 @@ export const HomePage: React.FC = () => {
                   alt="Packed live concert arena with cheering fans"
                   className="w-full h-full object-cover object-center"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#172033]/80 via-transparent to-transparent flex items-end p-5">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#172033]/85 via-[#172033]/20 to-transparent flex items-end p-5">
                   <div className="text-white space-y-1">
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F26336] text-white uppercase tracking-wider inline-block">
-                      Live Music
+                      Live Entertainment
                     </span>
                     <h3 className="font-display font-bold text-base text-white">
                       Experience Stadium Shows & Arenas
@@ -331,10 +372,13 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* 3. Popular Categories Grid (All 8 Categories) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-6">
+      <section className="py-10 sm:py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between mb-6 sm:mb-8">
           <div>
-            <h2 className="font-display font-extrabold text-2xl text-[#172033]">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#F26336] block mb-1">
+              Browse by Category
+            </span>
+            <h2 className="font-display font-extrabold text-xl sm:text-2xl text-[#172033] tracking-tight">
               Popular Categories
             </h2>
             <p className="text-xs sm:text-sm text-[#647084] mt-0.5">
@@ -343,7 +387,7 @@ export const HomePage: React.FC = () => {
           </div>
           <Link
             to="/explore"
-            className="text-xs font-semibold text-[#F26336] hover:text-[#DF4E27] flex items-center gap-1 group"
+            className="text-xs font-semibold text-[#F26336] hover:text-[#DF4E27] inline-flex items-center gap-1 group transition-colors"
           >
             <span>All Categories</span>
             <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -379,204 +423,131 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* 4. Trending Near You */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#F26336]" />
-            <div>
-              <h2 className="font-display font-extrabold text-2xl text-[#172033]">
-                Trending Near You
-              </h2>
-              <p className="text-xs sm:text-sm text-[#647084] mt-0.5">
-                Top booked events with fast filling seats this week
-              </p>
-            </div>
-          </div>
-          <Link
-            to="/explore"
-            className="text-xs font-semibold text-[#F26336] hover:text-[#DF4E27] flex items-center gap-1 group"
-          >
-            <span>See more</span>
-            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </div>
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-80 rounded-2xl bg-[#F7F8FA] animate-pulse border border-[#E6E9EF]" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {trendingEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-        )}
-      </section>
+      <SectionContainer
+        id="trending-section"
+        icon={Flame}
+        iconColor="text-[#F26336]"
+        title="Trending Near You"
+        subtitle={
+          selectedCity !== "All Cities"
+            ? `Top booked events with fast filling seats in ${selectedCity}`
+            : "Top booked events with fast filling seats across all venues this week"
+        }
+        viewAllLink="/explore"
+        viewAllText="See more"
+        isLoading={isLoading}
+        itemCount={trendingEvents.length}
+        columns={4}
+      >
+        {trendingEvents.map((event) => (
+          <EventCard key={event.id} event={event} />
+        ))}
+      </SectionContainer>
 
       {/* 5. Featured Upcoming Events */}
       {featuredEvents.length > 0 && (
-        <section className="bg-[#F7F8FA] py-14 border-y border-[#E6E9EF]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#F26336] block mb-1">
-                  Hand-Picked Highlights
-                </span>
-                <h2 className="font-display font-extrabold text-2xl text-[#172033]">
-                  Featured Upcoming Events
-                </h2>
-              </div>
-              <Link
-                to="/explore"
-                className="text-xs font-semibold text-[#F26336] hover:text-[#DF4E27] flex items-center gap-1 group"
-              >
-                <span>View all featured</span>
-                <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredEvents.slice(0, 3).map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
-          </div>
-        </section>
+        <SectionContainer
+          id="featured-section"
+          badge="Hand-Picked Highlights"
+          title="Featured Upcoming Events"
+          subtitle="Curated stadium concerts, high-stakes cricket tournaments, and premier cultural festivals"
+          viewAllLink="/explore"
+          viewAllText="View all featured"
+          alternate={true}
+          columns={3}
+          itemCount={featuredEvents.length}
+        >
+          {featuredEvents.map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </SectionContainer>
       )}
 
       {/* 6. Movies and Entertainment */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-2">
-              <Film className="w-5 h-5 text-[#4263EB]" />
-              <h2 className="font-display font-extrabold text-2xl text-[#172033]">
-                Movies & Entertainment
-              </h2>
-            </div>
-            <p className="text-xs sm:text-sm text-[#647084] mt-0.5">
-              Blockbusters, IMAX 3D premieres, and headlining comedy specials
-            </p>
-          </div>
-          <Link
-            to="/category/movies"
-            className="text-xs font-semibold text-[#4263EB] hover:text-[#3651C9] flex items-center gap-1 group"
-          >
-            <span>Explore Movies</span>
-            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(movieAndComedy.length > 0 ? movieAndComedy : allListings.slice(0, 3)).map((event) => (
+      {movieAndComedyListings.length > 0 && (
+        <SectionContainer
+          id="movies-section"
+          icon={Film}
+          iconColor="text-[#4263EB]"
+          title="Movies & Entertainment"
+          subtitle="Blockbuster cinema premieres, IMAX 70mm, and headlining comedy specials"
+          viewAllLink="/category/movies"
+          viewAllText="Explore Movies & Comedy"
+          columns={3}
+          itemCount={movieAndComedyListings.length}
+        >
+          {movieAndComedyListings.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}
-        </div>
-      </section>
+        </SectionContainer>
+      )}
 
       {/* 7. Experiences and Attractions */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-2">
-              <Compass className="w-5 h-5 text-[#168566]" />
-              <h2 className="font-display font-extrabold text-2xl text-[#172033]">
-                Experiences & Attractions
-              </h2>
-            </div>
-            <p className="text-xs sm:text-sm text-[#647084] mt-0.5">
-              Theme park weekend passes, adventure trails, and guided discovery
-            </p>
-          </div>
-          <Link
-            to="/category/activities"
-            className="text-xs font-semibold text-[#168566] hover:underline flex items-center gap-1 group"
-          >
-            <span>View Attractions</span>
-            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(activitiesList.length > 0 ? activitiesList : allListings.slice(1, 4)).map((event) => (
+      {activitiesListings.length > 0 && (
+        <SectionContainer
+          id="activities-section"
+          icon={Compass}
+          iconColor="text-[#168566]"
+          title="Experiences & Attractions"
+          subtitle="Theme park weekend passes, outdoor adventures, and family discovery tours"
+          viewAllLink="/category/activities"
+          viewAllText="View Attractions"
+          columns={3}
+          itemCount={activitiesListings.length}
+        >
+          {activitiesListings.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}
-        </div>
-      </section>
+        </SectionContainer>
+      )}
 
       {/* 8. Sports and Live Performances */}
-      <section className="bg-[#F7F8FA] py-14 border-y border-[#E6E9EF]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-[#F26336]" />
-                <h2 className="font-display font-extrabold text-2xl text-[#172033]">
-                  Sports & Live Performances
-                </h2>
-              </div>
-              <p className="text-xs sm:text-sm text-[#647084] mt-0.5">
-                Stadium atmospheres, cricket tournaments, and world tour concerts
-              </p>
-            </div>
-            <Link
-              to="/category/sports"
-              className="text-xs font-semibold text-[#F26336] hover:text-[#DF4E27] flex items-center gap-1 group"
-            >
-              <span>View Sports</span>
-              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(sportsAndConcerts.length > 0 ? sportsAndConcerts : allListings.slice(0, 3)).map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 9. Local and Cultural Events */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-2">
-              <Palette className="w-5 h-5 text-[#7A240C]" />
-              <h2 className="font-display font-extrabold text-2xl text-[#172033]">
-                Local & Cultural Events
-              </h2>
-            </div>
-            <p className="text-xs sm:text-sm text-[#647084] mt-0.5">
-              Arts biennials, heritage fairs, and tech conferences
-            </p>
-          </div>
-          <Link
-            to="/category/cultural"
-            className="text-xs font-semibold text-[#F26336] hover:text-[#DF4E27] flex items-center gap-1 group"
-          >
-            <span>View Cultural</span>
-            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(culturalAndConferences.length > 0 ? culturalAndConferences : allListings.slice(2, 5)).map((event) => (
+      {sportsAndConcertListings.length > 0 && (
+        <SectionContainer
+          id="sports-section"
+          icon={Trophy}
+          iconColor="text-[#F26336]"
+          title="Sports & Live Performances"
+          subtitle="Stadium atmospheres, cricket tournaments, and arena concert tours"
+          viewAllLink="/category/sports"
+          viewAllText="View Sports"
+          alternate={true}
+          columns={3}
+          itemCount={sportsAndConcertListings.length}
+        >
+          {sportsAndConcertListings.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}
-        </div>
-      </section>
+        </SectionContainer>
+      )}
+
+      {/* 9. Local and Cultural Events */}
+      {culturalAndConferencesListings.length > 0 && (
+        <SectionContainer
+          id="cultural-section"
+          icon={Palette}
+          iconColor="text-[#7A240C]"
+          title="Local, Cultural & Intercity Travel"
+          subtitle="Arts biennials, heritage fairs, developer summits, and verified bus travel routes"
+          viewAllLink="/category/cultural"
+          viewAllText="View Cultural & Travel"
+          columns={3}
+          itemCount={culturalAndConferencesListings.length}
+        >
+          {culturalAndConferencesListings.map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </SectionContainer>
+      )}
 
       {/* 10. Transparent Pricing and Booking Trust Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl bg-white border border-[#E6E9EF] p-8 sm:p-12 shadow-card space-y-8">
           <div className="max-w-3xl space-y-3">
             <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FFF0E9] text-[#F26336] inline-block">
               Our Core Product Guarantee
             </span>
-            <h2 className="font-display font-black text-2xl sm:text-4xl text-[#172033]">
+            <h2 className="font-display font-black text-2xl sm:text-4xl text-[#172033] tracking-tight">
               No surprises at checkout.
             </h2>
             <p className="text-sm sm:text-base text-[#647084] leading-relaxed">
@@ -584,7 +555,7 @@ export const HomePage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-[#E6E9EF]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-[#E6E9EF]">
             <div className="space-y-2">
               <div className="w-9 h-9 rounded-lg bg-[#FFF0E9] text-[#F26336] flex items-center justify-center font-bold text-sm">
                 01
@@ -626,33 +597,17 @@ export const HomePage: React.FC = () => {
 
       {/* 11. Recently Viewed or Personalized Recommendations */}
       {recentlyViewed.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="font-display font-extrabold text-xl text-[#172033]">
-                Recently Viewed by You
-              </h2>
-              <p className="text-xs text-[#647084] mt-0.5">
-                Pick up where you left off
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                localStorage.removeItem("beyond_recent_events");
-                setRecentlyViewed([]);
-              }}
-              className="text-xs font-semibold text-[#8E98A8] hover:text-[#DC2626]"
-            >
-              Clear history
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {recentlyViewed.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-        </section>
+        <SectionContainer
+          id="recently-viewed-section"
+          title="Recently Viewed by You"
+          subtitle="Pick up where you left off"
+          columns={4}
+          itemCount={recentlyViewed.length}
+        >
+          {recentlyViewed.map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </SectionContainer>
       )}
     </div>
   );
