@@ -1,0 +1,7 @@
+-r base.txt
+
+# Production server
+gunicorn==23.0.0
+
+# Sentry
+sentry-sdk[django]==2.17.0

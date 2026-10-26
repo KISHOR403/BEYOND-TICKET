@@ -1,0 +1,14 @@
+-r base.txt
+
+# Testing
+pytest==8.3.3
+pytest-django==4.9.0
+pytest-cov==6.0.0
+factory-boy==3.3.1
+
+# Dev tools
+django-debug-toolbar==4.4.6
+ipython==8.28.0
+
+# Linting
+ruff==0.7.1
